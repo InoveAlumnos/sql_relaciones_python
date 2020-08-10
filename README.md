@@ -3,7 +3,7 @@ Inove Escuela de Código\
 info@inove.com.ar\
 Web: [Inove](http://inove.com.ar)
 
-# SQL Introducción! [Python]
+# SQL Relaciones! [Python]
 En este repositorio encontrarán los siguientes archivos:
 
 __Ejemplos que el profesor mostrará en clase__\
@@ -14,9 +14,11 @@ ejercicios_clase.py
 
 __Ejercicios para que el alumno profundice sobre el tema durante la semana__\
 ejercicios_practica.md
+libreria.csv
 
-__Ejemplo utilizado en la presentación para las tablas relacionadas__\
-personas_nacionalidad.py
+__Archivos de configuración__\
+config.py
+config.ini
 
 # Consultas
 alumnos@inove.com.ar

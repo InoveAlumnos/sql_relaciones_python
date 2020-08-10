@@ -14,9 +14,21 @@ __author__ = "Inove Coding School"
 __email__ = "alumnos@inove.com.ar"
 __version__ = "1.1"
 
+import os
 import sqlite3
+from config import config
 
 # https://extendsclass.com/sqlite-browser.html
+
+# Obtener la path de ejecución actual del script
+script_path = os.path.dirname(os.path.realpath(__file__))
+
+# Obtener los parámetros del archivo de configuración
+config_path_name = os.path.join(script_path, 'config.ini')
+db = config('db', config_path_name)
+
+# Obtener el path real del archivo de schema
+schema_path_name = os.path.join(script_path, db['schema'])
 
 
 def create_schema():
@@ -24,13 +36,13 @@ def create_schema():
     # Conectarnos a la base de datos
     # En caso de que no exista el archivo se genera
     # como una base de datos vacia
-    conn = sqlite3.connect('personas_nacionalidad.db')
+    conn = sqlite3.connect(db['database'])
 
     # Crear el cursor para poder ejecutar las querys
     c = conn.cursor()
 
     # Crar esquema desde archivo
-    c.executescript(open('schema.sql', "r").read())
+    c.executescript(open(schema_path_name, "r").read())
 
     # Para salvar los cambios realizados en la DB debemos
     # ejecutar el commit, NO olvidarse de este paso!
@@ -41,13 +53,14 @@ def create_schema():
 
 
 def insert_nacionalidad(nat_id, name):
-    conn = sqlite3.connect('personas_nacionalidad.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
     values = (nat_id, name)
 
     c.execute("""
-        INSERT INTO nacionalidad (id, name)
+        INSERT INTO nacionalidad (id, country)
         VALUES (?,?);""", values)
 
     conn.commit()
@@ -56,14 +69,20 @@ def insert_nacionalidad(nat_id, name):
 
 
 def insert_persona(name, age, nationality):
-    conn = sqlite3.connect('personas.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
     values = [name, age, nationality]
 
-    c.execute("""
-        INSERT INTO persona (name, age, nationality)
-        VALUES (?,?,?);""", values)
+    try:
+        c.execute("""
+            INSERT INTO persona (name, age, fk_nationality_id)
+            SELECT ?,?, n.id
+            FROM nacionalidad as n
+            WHERE n.country =?;""", values)
+    except sqlite3.Error as err:
+        print(err)
 
     conn.commit()
     # Cerrar la conexión con la base de datos
@@ -71,12 +90,18 @@ def insert_persona(name, age, nationality):
 
 
 def insert_grupo(group):
-    conn = sqlite3.connect('personas.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
-    c.executemany("""
-        INSERT INTO persona (name, age, nationality)
-        VALUES (?,?,?);""", group)
+    try:
+        c.executemany("""
+            INSERT INTO persona (name, age, fk_nationality_id)
+            SELECT ?,?, n.id
+            FROM nacionalidad as n
+            WHERE n.country =?;""", group)
+    except sqlite3.Error as err:
+        print(err)
 
     conn.commit()
     # Cerrar la conexión con la base de datos
@@ -85,12 +110,15 @@ def insert_grupo(group):
 
 def show():
     # Conectarse a la base de datos
-    conn = sqlite3.connect('personas.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
     # Leer todas las filas y obtener los datos de a uno
-    c.execute('SELECT * FROM persona')
-    print('Recorrer los datos desde el cursor')
+    c.execute("""SELECT p.id, p.name, p.age, n.country
+                 FROM persona as p, nacionalidad as n
+                 WHERE p.fk_nationality_id = n.id;""")
+
     while True:
         row = c.fetchone()
         if row is None:
@@ -101,13 +129,18 @@ def show():
     conn.close()
 
 
-def update_persona_age(name, age):
+def update_persona_nationality(name, nationality):
     # Conectarse a la base de datos
-    conn = sqlite3.connect('personas.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
-    rowcount = c.execute("UPDATE persona SET age =? WHERE name =?",
-                         (age, name)).rowcount
+    rowcount = c.execute("""UPDATE persona
+                            SET fk_nationality_id =
+                            (SELECT n.id FROM nacionalidad as n
+                             WHERE n.country =?)
+                            WHERE name =?""",
+                         (nationality, name)).rowcount
 
     print('Filas actualizadas:', rowcount)
 
@@ -119,7 +152,8 @@ def update_persona_age(name, age):
 
 def delete_persona(name):
     # Conectarse a la base de datos
-    conn = sqlite3.connect('personas.db')
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
     # Borrar la fila cuyo nombre coincida con la búsqueda
@@ -136,18 +170,37 @@ def delete_persona(name):
     conn.close()
 
 
+def count_persona(nationality):
+        # Conectarse a la base de datos
+    conn = sqlite3.connect(db['database'])
+    conn.execute("PRAGMA foreign_keys = 1")
+    c = conn.cursor()
+
+    # Borrar la fila cuyo nombre coincida con la búsqueda
+    # NOTA: Recordar que las tupla un solo elemento se definen como
+    # (elemento,)
+    # Si presta a confusión usar una lista --> [elemento]
+    c.execute("""SELECT COUNT(p.id) AS country_count
+                 FROM persona as p, nacionalidad as n
+                 WHERE p.fk_nationality_id = n.id
+                 AND n.country =?;""", (nationality,))
+
+    result = c.fetchone()
+    count = result[0]
+    print('Personas de', nationality, 'encontradas:', count)
+
+
+    # Cerrar la conexión con la base de datos
+    conn.close()
+
+
 if __name__ == '__main__':
-    print("Bienvenidos a otra clase de Inove con Python")  
+    print("Bienvenidos a otra clase de Inove con Python")
     create_schema()
 
     insert_nacionalidad(1, 'Argentina')
     insert_nacionalidad(2, 'Holanda')
     insert_nacionalidad(3, 'Estados Unidos')
-
-    # insert_persona('Inove', 12, 'Argentina')
-    # insert_persona('Python', 29, 'Holanda')
-    # insert_persona('Max', 35, 'Estados Unidos')
-    # insert_persona('Mirta', 93, 'Argentina')
 
     insert_persona('Inove', 12, 'Argentina')
     insert_persona('Python', 29, 'Holanda')
@@ -156,9 +209,10 @@ if __name__ == '__main__':
 
     show()
 
+    count_persona('Argentina')
 
-    # update_persona_age('Max', 52)
-
+    # update_persona_nationality('Max', 'Holanda')
+    # show()
 
     # group = [('Max', 40, 'Estados Unidos'),
     #          ('SQL', 13, 'Inglaterra'),
