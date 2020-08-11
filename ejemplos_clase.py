@@ -15,7 +15,9 @@ __email__ = "alumnos@inove.com.ar"
 __version__ = "1.1"
 
 import os
+import csv
 import sqlite3
+
 from config import config
 
 # https://extendsclass.com/sqlite-browser.html
@@ -26,6 +28,7 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 # Obtener los parámetros del archivo de configuración
 config_path_name = os.path.join(script_path, 'config.ini')
 db = config('db', config_path_name)
+dataset = config('dataset', config_path_name)
 
 # Obtener el path real del archivo de schema
 schema_path_name = os.path.join(script_path, db['schema'])
@@ -52,16 +55,14 @@ def create_schema():
     conn.close()
 
 
-def insert_nacionalidad(nat_id, name):
+def insert_nacionalidad( name):
     conn = sqlite3.connect(db['database'])
     conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
-    values = (nat_id, name)
-
     c.execute("""
-        INSERT INTO nacionalidad (id, country)
-        VALUES (?,?);""", values)
+        INSERT INTO nacionalidad (country)
+        VALUES (?);""", (name,))
 
     conn.commit()
     # Cerrar la conexión con la base de datos
@@ -89,7 +90,7 @@ def insert_persona(name, age, nationality):
     conn.close()
 
 
-def insert_grupo(group):
+def insert_persona_grupo(group):
     conn = sqlite3.connect(db['database'])
     conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
@@ -106,6 +107,32 @@ def insert_grupo(group):
     conn.commit()
     # Cerrar la conexión con la base de datos
     conn.close()
+
+
+def fill(chunksize=2):
+    # Insertar el archivo CSV de nacionalidades
+    with open(dataset['nationality']) as fi:
+        reader = csv.DictReader(fi)
+        chunk = []
+
+        for row in reader:
+            insert_nacionalidad(row['nationality'])
+
+    # Insertar el archivo CSV de personas
+    with open(dataset['person']) as fi:
+        reader = csv.DictReader(fi)
+        chunk = []
+
+        for row in reader: 
+            items = [row['name'], int(row['age']), row['nationality_id']]
+            chunk.append(items)
+            if len(chunk) == chunksize:
+                insert_persona_grupo(chunk)
+                chunk.clear()
+        
+        if chunk:
+            insert_persona_grupo(chunk)
+
 
 
 def show():
@@ -198,15 +225,8 @@ if __name__ == '__main__':
     print("Bienvenidos a otra clase de Inove con Python")
     create_schema()
 
-    insert_nacionalidad(1, 'Argentina')
-    insert_nacionalidad(2, 'Holanda')
-    insert_nacionalidad(3, 'Estados Unidos')
-
-    insert_persona('Inove', 12, 'Argentina')
-    insert_persona('Python', 29, 'Holanda')
-    insert_persona('Max', 35, 'Estados Unidos')
-    insert_persona('Mirta', 93, 'Argentina')
-
+    # Insertar nacionalidades y personas
+    fill()
     show()
 
     count_persona('Argentina')
@@ -219,5 +239,5 @@ if __name__ == '__main__':
     #          ('SQLite', 20, 'Estados Unidos'),
     #          ]
 
-    # insert_grupo(group)
+    # insert_persona_grupo(group)
     # show()
