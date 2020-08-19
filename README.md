@@ -7,20 +7,20 @@ Web: [Inove](http://inove.com.ar)
 En este repositorio encontrarán los siguientes archivos:
 
 __Ejemplos que el profesor mostrará en clase__\
-ejemplos_clase.py
-persona.csv
+ejemplos_clase.py\
+persona.csv\
 nacionalidad.csv
 
 __Ejercicios para que el alumno desarrolle durante la clase__\
 ejercicios_clase.py
 
 __Ejercicios para que el alumno profundice sobre el tema durante la semana__\
-ejercicios_practica.md
-libreria_libro.csv
+ejercicios_practica.md\
+libreria_libro.csv\
 libreria_autor.csv
 
 __Archivos de configuración__\
-config.py
+config.py\
 config.ini
 
 # Consultas
