@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''
 SQL Introducción [Python]
-Ejemplos de práctica
+Ejemplos de clase
 ---------------------------
 Autor: Inove Coding School
 Version: 1.1
