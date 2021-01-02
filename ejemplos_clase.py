@@ -4,7 +4,7 @@ SQL Introducción [Python]
 Ejemplos de clase
 ---------------------------
 Autor: Inove Coding School
-Version: 1.1
+Version: 1.2
 
 Descripcion:
 Programa creado para mostrar ejemplos prácticos de los visto durante la clase
@@ -12,7 +12,7 @@ Programa creado para mostrar ejemplos prácticos de los visto durante la clase
 
 __author__ = "Inove Coding School"
 __email__ = "alumnos@inove.com.ar"
-__version__ = "1.1"
+__version__ = "1.2"
 
 import os
 import csv
@@ -109,42 +109,42 @@ def insert_persona_grupo(group):
     conn.close()
 
 
-def fill(chunksize=2):
+def fill():
     # Insertar el archivo CSV de nacionalidades
+    # Insertar fila a fila
     with open(dataset['nationality']) as fi:
-        reader = csv.DictReader(fi)
-        chunk = []
+        data = list(csv.DictReader(fi))
 
-        for row in reader:
+        for row in data:
             insert_nacionalidad(row['nationality'])
 
     # Insertar el archivo CSV de personas
+    # Insertar todas las filas juntas
     with open(dataset['person']) as fi:
-        reader = csv.DictReader(fi)
-        chunk = []
+        data = list(csv.DictReader(fi))
 
-        for row in reader: 
-            items = [row['name'], int(row['age']), row['nationality_id']]
-            chunk.append(items)
-            if len(chunk) == chunksize:
-                insert_persona_grupo(chunk)
-                chunk.clear()
-        
-        if chunk:
-            insert_persona_grupo(chunk)
+        data_formateada = [[row['name'], int(row['age']), row['nationality_id']] for row in data]
+        insert_persona_grupo(data_formateada)
 
 
 
-def show():
+def show(limit=0):
     # Conectarse a la base de datos
     conn = sqlite3.connect(db['database'])
     conn.execute("PRAGMA foreign_keys = 1")
     c = conn.cursor()
 
     # Leer todas las filas y obtener los datos de a uno
-    c.execute("""SELECT p.id, p.name, p.age, n.country
+    query = """SELECT p.id, p.name, p.age, n.country
                  FROM persona as p, nacionalidad as n
-                 WHERE p.fk_nationality_id = n.id;""")
+                 WHERE p.fk_nationality_id = n.id"""
+
+    if limit > 0:
+        query = query + ' LIMIT ' + str(limit)
+
+    query = query + ';'
+
+    c.execute(query)
 
     while True:
         row = c.fetchone()
