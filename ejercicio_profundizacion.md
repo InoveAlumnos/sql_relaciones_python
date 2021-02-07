@@ -22,11 +22,11 @@ IMPORTANTE: Recuerden que es recomendable borrar la tabla (DROP) antes de crearl
 Deben crear una función "fill" que lea los datos de los archivos CSV y cargue esas filas de los archivos como filas de las tablas SQL. Pueden resolverlo de la forma que mejor crean. Deben usar la sentencia INSERT para insertar los datos.\
 
 ## fetch(id)
-Deben crear una función que imprima en pantalla las filas de la tabla "persona", pueden usar esta función para ver que "fill" realizó exactamente lo que era esperado. 
+Deben crear una función que imprima en pantalla las filas de la tabla "libro", pueden usar esta función para ver que "fill" realizó exactamente lo que era esperado. 
 - Deben usar la sentencia SELECT para llegar al objetivo junto con WHERE para leer la fila deseada (si se desea leer una en particular).
 - Debe usar el concepto de INNER JOIN para reemplazar el "id" del autor por su nombre definido en la tabla "autor".
 Esta función recibe como parámetro un id:
-- En caso de que el id sea igual a cero (id=0) deben imprimir todas las filas de la tabla "persona".
+- En caso de que el id sea igual a cero (id=0) deben imprimir todas las filas de la tabla "libro".
 - En caso de que id sea mayor a cero (id>0) deben imprimir sola la fila correspondiente a ese id.
 IMPORTANTE: Es posible que pasen como id un número no definido en la tabla y el sistema de fetchone les devuelva None, lo cual es correcto, pero el sistema no debe explotar porque haya retornado None. En ese caso pueden imprimir en pantalla que no existe esa fila en la base de datos (más adelante en una API responderá Error 404).
 
